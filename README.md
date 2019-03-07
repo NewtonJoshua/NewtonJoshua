@@ -382,8 +382,8 @@ kubectl scale deployment nn-deployment-1 --replicas=1
 
  # Deploy a new version of your app
 
-docker build -t gcr.io/${PROJECT_ID}/nn-image-1:v2 .
-docker push gcr.io/${PROJECT_ID}/nn-image-1:v2
+docker build -t gcr.io/${PROJECT_ID}/nn-image-1 .
+docker push gcr.io/${PROJECT_ID}/nn-image-1
 
 // apply a rolling update to the existing deployment
 kubectl set image deployment/nn-deployment-1 nn-deployment-1=gcr.io/${PROJECT_ID}/nn-image-1:v2
