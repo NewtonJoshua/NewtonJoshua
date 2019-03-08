@@ -5,6 +5,13 @@ def  imageTag = "gcr.io/${project}/${appName}:${env.BRANCH_NAME}.${env.BUILD_NUM
 
 pipeline {
     agent {
+		kubernetes {
+			label "worker-${UUID.randomUUID().toString()}"
+			defaultContainer 'jnlp'
+			yaml libraryResource("kubernetesPods/node.yaml")
+		}
+	}
+    agent {
         docker {
             image 'node:11-alpine'
         }
