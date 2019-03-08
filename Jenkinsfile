@@ -8,14 +8,39 @@ pipeline {
 		kubernetes {
 			label "worker-${UUID.randomUUID().toString()}"
 			defaultContainer 'jnlp'
-			yaml libraryResource("kubernetesPods/node.yaml")
+			yaml """
+apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+    some-label: builder-for-node-pipelines
+spec:
+  containers:
+  - name: node
+    image: node:11-alpine
+    command:
+    - cat
+    tty: true
+  - name: nodechrome
+    image: finbarrbrady/node-chromium
+    command:
+    - cat
+    tty: true
+  - name: gcloud-sdk
+    image: google/cloud-sdk
+    command:
+    - cat
+    tty: true
+    volumeMounts:
+    - name: dockersock
+      mountPath: /var/run/docker.sock
+  volumes:
+  - name: dockersock
+    hostPath:
+      path: /var/run/docker.sock
+"""
 		}
 	}
-    agent {
-        docker {
-            image 'node:11-alpine'
-        }
-    }
     
     stages {
         stage('Build Image') {
