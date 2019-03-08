@@ -42,14 +42,20 @@ spec:
   stages {
      //Stage 1 : Build the docker image.
   stage('Build image') {
-      sh("docker build -t ${imageTag} .")
+      steps{
+        sh("docker build -t ${imageTag} .")
+      }
+
   }
 
     //Stage 2 : Push the image to docker registry
   stage('Push image to registry') {
+      steps{
        container('gcloud') {
                 sh("gcloud docker -- push ${imageTag}")
         }
+      }
+
   }
     // stage('Deploy Canary') {
     //   // Canary branch
