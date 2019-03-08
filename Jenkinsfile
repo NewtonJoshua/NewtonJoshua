@@ -4,7 +4,11 @@ def  feSvcName = "${appName}"
 def  imageTag = "gcr.io/${project}/${appName}:${env.BRANCH_NAME}.${env.BUILD_NUMBER}"
 
 pipeline {
-    agent any
+    agent {
+         docker {
+            image 'node:11-alpine'
+        }
+    }
 
     stages {
         stage('Build Image') {
