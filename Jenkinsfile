@@ -28,12 +28,10 @@ pipeline {
         }
         stage('Deploy') {
             steps {
-                container('kubectl') {
                 // Change deployed image to the one we just built
-                    sh("kubectl --namespace=production apply -f k8s/services/services.yaml")
-                    sh("kubectl --namespace=production apply -f k8s/deployments/dev.yaml")
-                    sh("echo http://`kubectl --namespace=production get service/${feSvcName} -o jsonpath='{.status.loadBalancer.ingress[0].ip}'` > ${feSvcName}")
-                }
+                sh("kubectl --namespace=production apply -f k8s/services/services.yaml")
+                sh("kubectl --namespace=production apply -f k8s/deployments/dev.yaml")
+                sh("echo http://`kubectl --namespace=production get service/${feSvcName} -o jsonpath='{.status.loadBalancer.ingress[0].ip}'` > ${feSvcName}")
             }
         }
     }
