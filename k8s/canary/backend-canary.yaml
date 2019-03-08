@@ -15,20 +15,20 @@
 kind: Deployment
 apiVersion: extensions/v1beta1
 metadata:
-  name: gceme-backend-canary
+  name: newton-joshua-backend-canary
 spec:
   replicas: 1
   template:
     metadata:
       name: backend
       labels:
-        app: gceme
+        app: newton-joshua
         role: backend
         env: canary
     spec:
       containers:
       - name: backend
-        image: gcr.io/cloud-solutions-images/gceme:1.0.0
+        image: gcr.io/cloud-solutions-images/newton-joshua:1.0.0
         resources:
           limits:
             memory: "500Mi"

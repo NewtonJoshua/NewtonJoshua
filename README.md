@@ -403,7 +403,7 @@ https://cloud.google.com/load-balancing/docs/ssl-certificates#create-managed-ssl
 
 
 
-SSL:
+# SSL:
 This is a Beta release of Google-managed SSL certificates.
 
 gcloud beta compute ssl-certificates create [SSL_CERTIFICATE_NAME] --domains [DOMAIN]
@@ -430,6 +430,8 @@ https://cloud.google.com/kubernetes-engine/docs/concepts/configmap
 
 # Jenkins
 
+https://github.com/GoogleCloudPlatform/continuous-deployment-on-kubernetes
+
 brew install kubernetes-helm
 
 gcloud container clusters create jenkins-cd \
@@ -437,7 +439,9 @@ gcloud container clusters create jenkins-cd \
 --machine-type n1-standard-2 \
 --scopes "https://www.googleapis.com/auth/projecthosting,cloud-platform"
 
-git remote set-url origin https://source.developers.google.com/p/newton-joshua-com/r/gceme
+git remote set-url origin https://source.developers.google.com/p/newton-joshua-com/r/newton-joshua
+
+https://stackoverflow.com/a/54109965/6778969
 
 
 # namespace
