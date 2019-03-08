@@ -1,10 +1,15 @@
+def project = 'newton-joshua-com'
+def  appName = 'newton-joshua'
+def  feSvcName = "${appName}"
+def  imageTag = "gcr.io/${project}/${appName}:${env.BRANCH_NAME}.${env.BUILD_NUMBER}"
+
 pipeline {
     agent any
 
     stages {
-        stage('Build') {
+        stage('Build Image') {
             steps {
-                echo 'Building..'
+                sh("docker build -t ${imageTag} .")
             }
         }
         stage('Test') {
@@ -14,7 +19,11 @@ pipeline {
         }
         stage('Deploy') {
             steps {
-                echo 'Deploying....'
+                 container('kubectl') {
+               // Change deployed image to the one we just built
+                sh("kubectl --namespace=production apply -f k8s/services/services.yaml")
+                sh("kubectl --namespace=production apply -f k8s/deployments/dev.yaml")
+                sh("echo http://`kubectl --namespace=production get service/${feSvcName} -o jsonpath='{.status.loadBalancer.ingress[0].ip}'` > ${feSvcName}")
             }
         }
     }
