@@ -249,7 +249,7 @@ kubectl describe - show detailed information about a resource
 kubectl logs - print the logs from a container in a pod
 kubectl exec - execute a command on a container in a pod
 
-kubectl get pods
+kubectl get pods -o wide
 kubectl describe pods
 kubectl logs $POD_NAME
 
@@ -259,7 +259,7 @@ exit
 
 # expose ur app
 
-kubectl get pods
+kubectl get pods -o wide
 kubectl expose deployment/kubernetes-bootcamp --type="NodePort" --port 8080
 
 To create a new service and expose it to external traffic we’ll use the expose command with NodePort as parameter
@@ -271,11 +271,11 @@ kubectl describe services/kubernetes-bootcamp
 kubectl get deployment
 kubectl describe deployment
 // labels - use labels to query the list
-kubectl get pods -l run=kubernetes-bootcamp
+kubectl get pods -o wide -l run=kubernetes-bootcamp
 kubectl get services -l run=kubernetes-bootcamp
 kubectl label pod $POD_NAME app=v1
 kubectl describe pods $POD_NAME
-kubectl get pods -l app=v1
+kubectl get pods -o wide -l app=v1
 
 # Scaling
 we created a Deployment, and then exposed it publicly via a Service
@@ -285,7 +285,7 @@ kubectl get deployments
 kubectl scale deployments/kubernetes-bootcamp --replicas=4
 kubectl get deployments
 we have 4 instances of the application available. Next, let’s check if the number of Pods changed
-kubectl get pods -o wide
+kubectl get pods -o wide -o wide
 kubectl describe deployments/kubernetes-bootcamp
 
 Service is load-balancing the traffic.
@@ -294,7 +294,7 @@ kubectl describe services/kubernetes-bootcamp
 scale down 
 kubectl scale deployments/kubernetes-bootcamp --replicas=2
 kubectl get deployments
-kubectl get pods -o wide
+kubectl get pods -o wide -o wide
 
 # Rolling updates
 Rolling updates allow Deployments' update to take place with zero downtime by incrementally updating Pods instances with new ones.
@@ -303,7 +303,7 @@ kubectl describe pods
 
 To update the image of the application to version 2, use the set image command, followed by the deployment name and the new image version
 kubectl set image deployments/kubernetes-bootcamp kubernetes-bootcamp=jocatalin/kubernetes-bootcamp:v2
-kubectl get pods
+kubectl get pods -o wide
 kubectl rollout status deployments/kubernetes-bootcamp
 
 
@@ -335,7 +335,7 @@ gcloud auth login
 gcloud config set project newton-joshua-com
 
 https://cloud.google.com/compute/docs/regions-zones/
-gcloud config set compute/zone asia-south1-a
+gcloud config set compute/zone us-central1-a
 
 us-central1
 
@@ -349,23 +349,25 @@ go to app folder
 build the container image 
 
 export PROJECT_ID="$(gcloud config get-value project -q)"
-docker build -t gcr.io/${PROJECT_ID}/nn-image-1:v1 .
+docker build -t gcr.io/${PROJECT_ID}/newton-joshua:v1 .
 
 The gcr.io prefix refers to Google Container Registry, where the image will be hosted
 
 gcloud auth configure-docker
 
-docker push gcr.io/${PROJECT_ID}/nn-image-1:v1
+docker push gcr.io/${PROJECT_ID}/newton-joshua:v1
 
 Tools -> container registry
 
 # Deploy your application
 
-kubectl run nn-deployment-1 --image=gcr.io/${PROJECT_ID}/nn-image-1:v1 --port 6006
+kubectl run nn-deployment-1 --image=gcr.io/${PROJECT_ID}/newton-joshua:v1 --port 6006
+kubectl apply -f k8s/deployments/production.yaml
 
 
 # Expose your application to the Internet
 kubectl expose deployment nn-deployment-1 --type=LoadBalancer --port 80 --target-port 6006
+kubectl apply -f k8s/services/services.yaml
 
 kubectl get service
 
@@ -376,17 +378,17 @@ kubectl get service
 
 kubectl scale deployment nn-deployment-1 --replicas=3
 kubectl get deployment nn-deployment-1
-kubectl get pods
+kubectl get pods -o wide
 kubectl scale deployment nn-deployment-1 --replicas=1
 
 
  # Deploy a new version of your app
 
-docker build -t gcr.io/${PROJECT_ID}/nn-image-1 .
-docker push gcr.io/${PROJECT_ID}/nn-image-1
+docker build -t gcr.io/${PROJECT_ID}/newton-joshua:v2 .
+docker push gcr.io/${PROJECT_ID}/newton-joshua:v2
 
 // apply a rolling update to the existing deployment
-kubectl set image deployment/nn-deployment-1 nn-deployment-1=gcr.io/${PROJECT_ID}/nn-image-1
+kubectl set image deployment/nn-deployment-1 nn-deployment-1=gcr.io/${PROJECT_ID}/newton-joshua:v2
 
 # Cleaning up
 kubectl delete service nn-deployment-1
@@ -434,7 +436,7 @@ https://github.com/GoogleCloudPlatform/continuous-deployment-on-kubernetes
 
 brew install kubernetes-helm
 
-gcloud container clusters create jenkins-cd \
+gcloud container clusters create nn-jenkins \
 --num-nodes 2 \
 --machine-type n1-standard-2 \
 --scopes "https://www.googleapis.com/auth/projecthosting,cloud-platform"
@@ -446,5 +448,59 @@ https://stackoverflow.com/a/54109965/6778969
 
 # namespace
 Create the namespace for production
+
+# Jenkins
+
+https://github.com/GoogleCloudPlatform/continuous-deployment-on-kubernetes
+brew install kubernetes-helm
+
+gcloud container clusters create nn-jenkins \
+--num-nodes 2 \
+--machine-type n1-standard-2 \
+--scopes "https://www.googleapis.com/auth/projecthosting,cloud-platform"
+
+gcloud container clusters get-credentials nn-jenkins
+
+kubectl get pods -o wide
+
+Add yourself as a cluster administrator
+kubectl create clusterrolebinding cluster-admin-binding --clusterrole=cluster-admin --user=$(gcloud config get-value account)
+
+// Grant Tiller, the server side of Helm, the cluster-admin role in your cluster
+kubectl create serviceaccount tiller --namespace kube-system
+clusterrolebinding tiller-admin-binding --clusterrole=cluster-admin --serviceaccount=kube-system:tiller
+
+//Initialize Helm.
+helm init --service-account=tiller
+helm update
+helm version
+
+// Configure and Install Jenkins
+
+helm install -n nn stable/jenkins -f jenkins/values.yaml --version 0.16.6 --wait
+
+kubectl get pods -o wide
+
+// Run the following command to setup port forwarding to the Jenkins UI 
+
+export POD_NAME=$(kubectl get pods -l "component=nn-jenkins-master" -o jsonpath="{.items[0].metadata.name}")
+kubectl port-forward $POD_NAME 8080:8080 >> /dev/null &
+
+// Connect to Jenkins
+
+printf $(kubectl get secret nn-jenkins -o jsonpath="{.data.jenkins-admin-password}" | base64 --decode);echo
+
+
+git remote set-url origin https://source.developers.google.com/p/newton-joshua-com/r/newton-joshua
+
+
+# jenkins as docker
+
+brew install jenkins
+
+docker run --rm -u root -p 8080:8080 -v jenkins-data:/var/jenkins_home -v /var/run/docker.sock:/var/run/docker.sock -v "$HOME":/home jenkinsci/blueocean
+
+
+
 
 
