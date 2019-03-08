@@ -28,7 +28,7 @@ pipeline {
         }
         stage('Deploy') {
             steps {
-                withKubeConfig([credentialsId: 'mail@newtonjoshua.com']){
+               container('kubectl') {
                     // Change deployed image to the one we just built
                     sh("kubectl --namespace=production apply -f k8s/services/services.yaml")
                     sh("kubectl --namespace=production apply -f k8s/deployments/dev.yaml")
