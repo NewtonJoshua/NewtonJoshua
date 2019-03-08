@@ -11,8 +11,7 @@ RUN npm install
 
 # Bundle app source
 COPY src src
-COPY server/services server/services
-COPY server/server.js server/server.js
+COPY server server
 COPY configs configs
 COPY angular.json angular.json
 COPY webpack.config.js webpack.config.js
