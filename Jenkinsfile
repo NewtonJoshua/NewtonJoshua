@@ -5,13 +5,16 @@ def  imageTag = "gcr.io/${project}/${appName}:${env.BRANCH_NAME}.${env.BUILD_NUM
 
 pipeline {
     agent {
-         docker {
-            image 'node:11-alpine'
-        }
+        label 'docker' 
     }
 
     stages {
         stage('Build Image') {
+            agent {
+                docker {
+                    image 'node:11-alpine'
+                }
+            }
             steps {
                 sh("docker build -t ${imageTag} .")
             }
